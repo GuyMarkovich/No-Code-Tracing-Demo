@@ -15,10 +15,11 @@ public class Worker : BackgroundService
         _logger = logger;
     }
 
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var host = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost";
-        var port = int.Parse(Environment.GetEnvironmentVariable("RABBITMQ_PORT") ?? "5672");
+        var portValue = Environment.GetEnvironmentVariable("RABBITMQ_PORT");
+        var port = int.TryParse(portValue, out var parsedPort) ? parsedPort : 5672;
         var username = Environment.GetEnvironmentVariable("RABBITMQ_USERNAME") ?? "guest";
         var password = Environment.GetEnvironmentVariable("RABBITMQ_PASSWORD") ?? "guest";
         var queue = Environment.GetEnvironmentVariable("RABBITMQ_QUEUE") ?? "orders";
@@ -35,6 +36,7 @@ public class Worker : BackgroundService
         _channel = _connection.CreateModel();
 
         _channel.QueueDeclare(queue, durable: true, exclusive: false, autoDelete: false);
+        _channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
 
         var consumer = new EventingBasicConsumer(_channel);
         consumer.Received += (_, ea) =>
@@ -49,13 +51,14 @@ public class Worker : BackgroundService
 
         _logger.LogInformation("Listening on queue '{Queue}'", queue);
 
-        stoppingToken.Register(() =>
+        try
         {
-            _channel?.Dispose();
-            _connection?.Dispose();
-        });
-
-        return Task.CompletedTask;
+            await Task.Delay(Timeout.InfiniteTimeSpan, stoppingToken);
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Stopping RabbitMQ consumer");
+        }
     }
 
     public override void Dispose()

@@ -7,7 +7,8 @@ var app = builder.Build();
 app.MapGet("/publish", () =>
 {
     var host = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost";
-    var port = int.Parse(Environment.GetEnvironmentVariable("RABBITMQ_PORT") ?? "5672");
+    var portValue = Environment.GetEnvironmentVariable("RABBITMQ_PORT");
+    var port = int.TryParse(portValue, out var parsedPort) ? parsedPort : 5672;
     var username = Environment.GetEnvironmentVariable("RABBITMQ_USERNAME") ?? "guest";
     var password = Environment.GetEnvironmentVariable("RABBITMQ_PASSWORD") ?? "guest";
     var queue = Environment.GetEnvironmentVariable("RABBITMQ_QUEUE") ?? "orders";
@@ -27,10 +28,16 @@ app.MapGet("/publish", () =>
 
     var message = $"Order created at {DateTime.UtcNow:O}";
     var body = Encoding.UTF8.GetBytes(message);
+    var properties = channel.CreateBasicProperties();
+    properties.Persistent = true;
+    properties.ContentType = "text/plain";
+    properties.Headers = new Dictionary<string, object>();
 
-    channel.BasicPublish(exchange: "", routingKey: queue, body: body);
+    channel.BasicPublish(exchange: "", routingKey: queue, basicProperties: properties, body: body);
 
     return Results.Ok(new { status = "published", message });
 });
+
+app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
 
 app.Run();
