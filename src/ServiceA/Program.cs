@@ -38,6 +38,9 @@ app.MapGet("/publish", () =>
     return Results.Ok(new { status = "published", message });
 });
 
-app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
+app.MapGet("/healthz", () => Results
+.Ok(new { status = "ok" }));
+
+app.Run();Ok(new { status = "ok" }));
 
 app.Run();

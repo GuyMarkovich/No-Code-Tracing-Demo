@@ -38,7 +38,7 @@ spec:
     spec:
       initContainers:
         - name: copy-dotnet-auto-instrumentation
-          image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-dotnet:latest
+          image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-dotnet:1.12.0
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
@@ -50,8 +50,8 @@ spec:
               mountPath: /otel
       containers:
         - name: service-a
-          image: ghcr.io/example/tracing-service-a:latest
-          imagePullPolicy: IfNotPresent
+          image: tracing-service-a:1.0.0
+          imagePullPolicy: Never
           ports:
             - name: http
               containerPort: 8080
@@ -71,9 +71,13 @@ spec:
             - name: CORECLR_ENABLE_PROFILING
               value: "1"
             - name: CORECLR_PROFILER
-              value: "{ff6812dd-73e9-4547-a251-63cad9023c9a}"
+              value: "{918728DD-259F-4A6A-AC2B-B85E1B658318}"
             - name: CORECLR_PROFILER_PATH
               value: /otel/linux-x64/OpenTelemetry.AutoInstrumentation.Native.so
+            - name: DOTNET_ADDITIONAL_DEPS
+              value: /otel/AdditionalDeps
+            - name: DOTNET_SHARED_STORE
+              value: /otel/store
             - name: DOTNET_STARTUP_HOOKS
               value: /otel/net/OpenTelemetry.AutoInstrumentation.StartupHook.dll
             - name: OTEL_DOTNET_AUTO_HOME
@@ -90,6 +94,10 @@ spec:
               value: service.namespace=tracing-demo,deployment.environment=demo
             - name: OTEL_TRACES_SAMPLER
               value: always_on
+            - name: OTEL_LOG_LEVEL
+              value: debug
+            - name: OTEL_DOTNET_AUTO_LOG_DIRECTORY
+              value: /tmp/otel-logs
           volumeMounts:
             - name: otel-auto-instrumentation
               mountPath: /otel
