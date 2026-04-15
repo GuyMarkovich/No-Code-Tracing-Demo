@@ -94,3 +94,23 @@ In the trace waterfall, you should see a single trace that crosses the asynchron
 That shared trace ID is the proof point: the .NET auto-instrumentation injected W3C trace context into RabbitMQ message headers on publish, and extracted it on consume, without modifying the application code.
 
 If you see separate traces for producer and consumer, confirm the apps use a RabbitMQ client version supported by the .NET auto-instrumentation image and that the message headers are preserved by the publish/consume flow.
+
+## Example Screenshots
+
+### Trace List — Service B Consumer Spans
+
+Searching by `service-b` in Grafana Explore shows all the `orders deliver` consumer spans captured automatically:
+
+![Trace list for service-b](example-photos/ex3.png)
+
+### Service A — Producer Trace
+
+Opening a `service-a` trace reveals the HTTP `GET /publish` server span with a child `orders publish` span — the RabbitMQ message send captured by auto-instrumentation:
+
+![Service A producer trace](example-photos/ex2.png)
+
+### Service B — Consumer Trace with Linked Span
+
+The `service-b` consumer trace shows the `orders deliver` span with messaging attributes (`messaging.destination.name`, `messaging.message.body.size`, `messaging.operation`). The **References** section contains a link back to the originating `service-a` trace:
+
+![Service B consumer trace with linked span](example-photos/ex1.png)
