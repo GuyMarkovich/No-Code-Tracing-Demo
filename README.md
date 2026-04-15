@@ -101,16 +101,16 @@ If you see separate traces for producer and consumer, confirm the apps use a Rab
 
 Searching by `service-b` in Grafana Explore shows all the `orders deliver` consumer spans captured automatically:
 
-![Trace list for service-b](example-photos/ex3.png)
+![Trace list for service-b](example-screenshots/ex3.png)
 
 ### Service A — Producer Trace
 
 Opening a `service-a` trace reveals the HTTP `GET /publish` server span with a child `orders publish` span — the RabbitMQ message send captured by auto-instrumentation:
 
-![Service A producer trace](example-photos/ex2.png)
+![Service A producer trace](example-screenshots/ex2.png)
 
 ### Service B — Consumer Trace with Linked Span
 
 The `service-b` consumer trace shows the `orders deliver` span with messaging attributes (`messaging.destination.name`, `messaging.message.body.size`, `messaging.operation`). The **References** section contains a link back to the originating `service-a` trace:
 
-![Service B consumer trace with linked span](example-photos/ex1.png)
+![Service B consumer trace with linked span](example-screenshots/ex1.png)
